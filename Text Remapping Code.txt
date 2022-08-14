@@ -1,0 +1,38 @@
+'''
+made by hafiz
+'''
+
+def reLocate():
+    letter = {'a': 'a', 'b': 'b', 'c': 'c', 'd': 'd', 'e': 'e', 'f': 'f', 'g': 'g', 'h': 'h', 'i': 'i', 'j': 'j',
+    'k': 'k', 'l': 'l', 'm': 'm', 'n': 'n', 'o': 'o', 'p': 'p', 'q': 'q', 'r': 'r', 's': 's', 't': 't', 'u': 'u', 
+    'v': 'v', 'w': 'w', 'x': 'x', 'y': 'y', 'z': 'z'}
+
+    x = list(letter.values())
+    xCopy = []
+    xLen = len(x)
+
+    for i in range(len(letter)):
+        if i > -1:
+            xLen -= 1
+            xCopy.append(x[xLen])
+
+    xLen, controller = len(x), 0
+    for i in letter.keys():
+        if controller != xLen:
+            letter.update({i: xCopy[controller]})
+            controller += 1
+    return letter
+
+def reMap(word):
+    word = word.lower()
+    temp = ''
+    for i in word: 
+        if i == ' ':
+            temp += ' '
+        else: 
+            temp += reLocate().get(i)
+    return temp
+
+
+
+print(reMap('nfsznnzw szura hbzadzm yrm nlsw mliwrm'))

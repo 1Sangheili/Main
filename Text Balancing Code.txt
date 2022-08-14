@@ -1,0 +1,21 @@
+'''
+made by hafiz
+'''
+
+let CChar = {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6, 'g': 7, 'h': 8, 'i': 9, 'j': 10, 
+'k': 11, 'l': 12, 'm': 13, 'n': 14, 'o': 15, 'p': 16, 'q': 17, 'r': 18, 's': 19, 't': 20, 
+'u': 21, 'v': 22, 'w': 23, 'x': 24, 'y': 25, 'z': 26}
+
+// check  if the length of word is even or odd
+// if odd: ignore middle character that divide the word
+
+let balanced = (word) => {
+    word = word.toLowerCase();
+    let right = 0, left = 0
+    if (word % 2 != 0) 
+        word = word.replace(word.charCodeAt(word.length/2), '')
+    for (var i in word) 
+        if (i < word.length/2) left += CChar[word[i]]; else right += CChar[word[i]]
+    return left.toString() +', '+ right.toString()
+}
+console.log(balanced('ouis'))
