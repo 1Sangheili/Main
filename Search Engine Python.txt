@@ -1,0 +1,178 @@
+'''
+create suggested keywords engine
+'''
+import threading
+
+'''
+find the keywords engine
+'''
+def sugg(r,  suggested):
+    match_temp , short_temp = [] , []
+    for i in range(len(suggested)):
+        if Ass(r, suggested[i]):
+            match_temp.append(str(suggested[i]))
+    if match_temp != []: 
+        for v in range(len(match_temp)):
+            short_temp.append(match_temp[v])
+        return 'Entered: '+r+'\nSuggested keywords: '+str((short_temp)).replace('[', '').replace(']', '').replace(',', ' |').replace("'", '')
+    else: 
+        return 'Entered: '+r+'\nNo matching keywords found...'
+
+'''
+if every character is in the string
+find character concurrences of given word in specified string 
+'''
+
+def Ass(word, matching):
+    if len(matching) > (75/(len(word))) :
+        return False
+    if word in matching:
+        return True
+    else:
+        return False
+
+'''
+dictionary list
+'''
+def gen_Dict():
+    read_Dict = open('Dictionary.txt', 'r')
+    dang = read_Dict.read()
+    read_Dict.close()
+    dang = dang.lower()
+
+    for _ in dang:
+        dang = dang.replace('?', '').replace('(', '').replace(')', '').replace('•', '').replace('on upon', '').replace('v & phr v', '')
+        dang = dang.replace(',', '').replace('n& v', '').replace('(Br', '').replace('(TV)', '').replace('det & pron', '').replace(':', '')
+        dang = dang.replace('!', '').replace('out', '').replace('/', ' ').replace('prep phr', '').replace('"', '').replace('\n', ' ')
+        dang = dang.replace('@', '')
+
+    dang = dang.split(' ')
+    unwanted_keywords = ['is ', 'at', ' at ', 'the ', ' the ', 'an ', ' an ', 'and ', ' and ', 'so ', ' so ', '\n']
+    
+    for p in dang:
+        if len(p) < 1  or p.isdigit() or p in unwanted_keywords:
+            dang.pop(dang.index(p))
+        if dang.count(p) > 1:
+            while dang.count(p) > 1:
+                dang.pop(dang.index(p))
+    return dang
+                                 
+'''  runner code  '''
+def run(word):
+
+    main = sugg(word, gen_Dict())
+
+    return main
+
+print(run('lap'))
+
+
+________________________________________________________________________________________________________________________________________________________
+let uncersor = (word, replaceBy) => {
+    let newStr = ''
+    let con = -1
+    for (var i in word) {
+        if (word[i] == '*') {
+            con += 1
+            newStr += replaceBy[con] 
+        } else newStr += word[i]
+    }return newStr
+}
+console.log(uncersor("*PP*RC*S*", "UEAE"))
+________________________________________________________________________________________________________________________________________________________
+let CChar = {'a': 1, 'b': 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6, 'g': 7, 'h': 8, 'i': 9, 'j': 10, 
+'k': 11, 'l': 12, 'm': 13, 'n': 14, 'o': 15, 'p': 16, 'q': 17, 'r': 18, 's': 19, 't': 20, 
+'u': 21, 'v': 22, 'w': 23, 'x': 24, 'y': 25, 'z': 26}
+
+// check  if the length of word is even or odd
+// if odd: ignore middle character that divide the word
+
+let balanced = (word) => {
+    word = word.toLowerCase();
+    let right = 0, left = 0
+    if (word % 2 != 0) 
+        word = word.replace(word.charCodeAt(word.length/2), '')
+    for (var i in word) 
+        if (i < word.length/2) left += CChar[word[i]]; else right += CChar[word[i]]
+    return left.toString() +', '+ right.toString()
+}
+console.log(balanced('ouis'))
+
+________________________________________________________________________________________________________________________________________________________
+from turtle import xcor
+
+def reLocate():
+    letter = {'a': 'a', 'b': 'b', 'c': 'c', 'd': 'd', 'e': 'e', 'f': 'f', 'g': 'g', 'h': 'h', 'i': 'i', 'j': 'j',
+    'k': 'k', 'l': 'l', 'm': 'm', 'n': 'n', 'o': 'o', 'p': 'p', 'q': 'q', 'r': 'r', 's': 's', 't': 't', 'u': 'u', 
+    'v': 'v', 'w': 'w', 'x': 'x', 'y': 'y', 'z': 'z'}
+
+    x = list(letter.values())
+    xCopy = []
+    xLen = len(x)
+
+    for i in range(len(letter)):
+        if i > -1:
+            xLen -= 1
+            xCopy.append(x[xLen])
+
+    xLen, controller = len(x), 0
+    for i in letter.keys():
+        if controller != xLen:
+            letter.update({i: xCopy[controller]})
+            controller += 1
+    return letter
+
+def reMap(word):
+    word = word.lower()
+    temp = ''
+    for i in word: 
+        if i == ' ':
+            temp += ' '
+        else: 
+            temp += reLocate().get(i)
+    return temp
+
+
+
+print(reMap('nfsznnzw szura hbzadzm yrm nlsw mliwrm'))
+___________________________________________________________________________________________________________________________________________________________
+class Surround {
+    contains(_) {
+        let $ = 0
+        let alphanumers = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+        for (var i in alphanumers) 
+            if (alphanumers[i] == _) {
+                return true
+            }else {
+                $ += 1
+            }
+    }
+}
+
+ let plusSign = (_) => {
+	 _ = _.toLowerCase()
+    let con = 0, num_of_alphanumer = 0
+    for (var i = 0; i < _.length; i++) {
+        let test1 = new Surround()
+        if (test1.contains(_[i])) {
+            num_of_alphanumer += 1
+            if (_[i-1] == '+' && _[i+1] == '+') con += 1
+        }
+    }return (num_of_alphanumer === con)
+ }
+ console.log(plusSign('+d+43++f+-+g+)+o+'))
+___________________________________________________________________________________________________________________________________________________________
+
+___________________________________________________________________________________________________________________________________________________________
+
+___________________________________________________________________________________________________________________________________________________________
+
+___________________________________________________________________________________________________________________________________________________________
+
+___________________________________________________________________________________________________________________________________________________________
+
+___________________________________________________________________________________________________________________________________________________________
+
+___________________________________________________________________________________________________________________________________________________________
+

@@ -1,0 +1,693 @@
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Scanner;
+// imports for driving MySql 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+class NEWcustomer extends Solaris {
+    private Scanner scan = new Scanner(System.in);
+    
+    public String randGenerator() {
+        String id = "";
+        for (int i = 0; i < 10; i++) {
+            id += String.valueOf(Math.round(Math.random() * (9 - 0 + 1) + 0));
+        }
+        return id;
+    }
+    
+    public void newRegister() throws SQLException {
+
+        Connection conn = super.getConnection();
+        System.out.println("\n:::::::::First-Time Registration:::::::::\n");
+        System.out.println("        Enter Details Precisely \n");
+
+        System.out.print("Enter your fullname: ");
+        String name = scan.nextLine();
+
+        System.out.print("Enter your phone number: ");
+        String phoneNumber = scan.nextLine();
+
+        System.out.print("Enter your email: ");
+        String email = scan.nextLine();
+
+        System.out.print("Create a strong password: ");
+        String password = scan.nextLine();
+
+        System.out.print("Enter your account number: ");
+        String acctNumber = new String();
+        acctNumber = scan.nextLine();
+        String x = randGenerator();
+
+        System.out.println("\nYour special ID is: " + x + "\nPlease save this ID to access your account.\n");
+
+        try {
+            PreparedStatement inject = conn.prepareStatement("INSERT into customerVault(spe_ID, name, phoneNumber, email, accountNumber, password,  balance) values ('" + x + "', '" + name + "', '" + phoneNumber + "', '" + email + "', '" + acctNumber + "', '" + password + "', 0)");
+            inject.executeUpdate();
+            System.out.println("Successfully Registered!\nAccess your account by using the provided special ID.");
+
+            File newText = new File(x + ".txt");
+            newText.createNewFile();
+        } catch (Exception e) {
+            System.out.println("Error in INSERTing new customer data into database at Main Option 2" + e);
+        }
+    }
+    public void getAllid() throws SQLException {
+        PreparedStatement getAll = super.getConnection().prepareStatement("SELECT spe_ID FROM customerVault");
+        getAll.executeQuery();
+
+    }
+    public void newRegister_Supplier() throws SQLException {
+        System.out.println("\n:::::::::New Supplier Registration:::::::::");
+        System.out.println("Please answer the questions below rightfully to register as a new Supplier...");
+        System.out.print("\nWhat is the 2nd Core-Concept of this project? Answer: ");
+        String core_answer = scan.nextLine();
+        System.out.print("What is the 2nd main language used to construct this program? Answer: ");
+        String language = scan.nextLine();
+        System.out.print("How many weeks did it took for this program to finish its contruction?\n1. 1 Week\n2. 2 Weeks\n3. 3 Weeks\nAnswer[number only]: ");
+        String time = scan.nextLine();
+
+        if (!core_answer.equalsIgnoreCase("inheritance") && !language.equalsIgnoreCase("sql") && !time.equalsIgnoreCase("3")) {
+            System.out.println("\nYou did not passed the test to register as a new Supplier.");
+        } else {
+            final String x = randGenerator();
+            System.out.println("\nSuccessfully registered as a new Supplier.");
+            System.out.println("Your special ID: " + x);
+            System.out.println("Access Supplier Page by entering the provided ID.");
+
+            PreparedStatement INSERT = super.getConnection().prepareStatement("INSERT into supplierIDs (id) values ('" + x + "')");
+            INSERT.executeUpdate();
+        }
+    }
+}
+class LOGINsupplier extends NEWcustomer {
+    private Scanner scan = new Scanner(System.in);
+    public void invokeAddFunds_to_supplier(String passCommand) throws SQLException {
+        PreparedStatement addBalance = super.getConnection().prepareStatement(passCommand);
+        addBalance.executeUpdate();
+    }
+    public void approveOrder() throws SQLException, IOException, InterruptedException {
+        System.out.println("\n:::::::::Orders:::::::::");
+        System.out.println("Blank field indicates no orders at the moment\n");
+        int count = 0;
+
+        PreparedStatement getID = super.getConnection().prepareStatement("SELECT id FROM suppliervault WHERE requestStatus = 'none' and status = 'active'");
+        PreparedStatement getCustomID = super.getConnection().prepareStatement("SELECT custom_ID FROM suppliervault WHERE requestStatus = 'none' and status = 'active'");
+        PreparedStatement getCost = super.getConnection().prepareStatement("SELECT costs_balance FROM suppliervault WHERE requestStatus = 'none' and status = 'active'");
+        ResultSet run_1 = getID.executeQuery();
+        ResultSet run_2 = getCustomID.executeQuery();
+        ResultSet run_3 = getCost.executeQuery();
+
+        while (run_1.next()) {
+            run_2.next();
+            run_3.next();
+            count += 1;
+            System.out.println(String.valueOf(count) + ". [ID: " + run_1.getString("id") + "] - " + "[custom ID: " + run_2.getString("custom_ID") + "] - " + "[Cost: RM" + run_3.getDouble("costs_balance") + "]\n");
+        }
+        System.out.print("Press 'enter' to approve an order, otherwise '0': ");
+        String option_2 = scan.nextLine();
+
+        Connection conn = super.getConnection();
+
+        if (option_2 == "") {
+            System.out.print("Enter the customer's custom ID: ");
+            String cust_ID = scan.nextLine();
+
+            PreparedStatement valid = conn.prepareStatement("SELECT custom_ID FROM suppliervault WHERE custom_ID  = '" + cust_ID + "'");
+            ResultSet check = valid.executeQuery();
+
+            if (check.next()) {
+                PreparedStatement getName = conn.prepareStatement("SELECT id FROM suppliervault WHERE custom_ID  = '" + cust_ID + "'");
+                ResultSet getName_ = getName.executeQuery();
+                getName_.next();
+                PreparedStatement getRealName = conn.prepareStatement("SELECT name FROM customervault WHERE spe_ID = '" + getName_.getString("id") + "'");
+                ResultSet getRealName_ = getRealName.executeQuery();
+                getRealName_.next();
+                System.out.println("\nApprove " + getRealName_.getString("name") + "" + "'s Order?");
+                System.out.print("Press enter to approve, otherwise '0': ");
+                String approve = scan.nextLine();
+
+                if (approve == "") {
+                    PreparedStatement UPDATESupplier = conn.prepareStatement("UPDATE suppliervault SET requestStatus = 'none', status = 'completed' WHERE custom_ID = '" + cust_ID + "'");
+                    UPDATESupplier.executeUpdate();
+
+                    System.out.println("\nOrder of Customer #" + cust_ID + " has been approved.");
+                    System.out.println("The system has notified the customer that the order is completed .");
+
+                    PreparedStatement getAmount = conn.prepareStatement("SELECT quantity FROM suppliervault WHERE custom_ID = '" + cust_ID + "'");
+                    ResultSet getAmount_ = getAmount.executeQuery();
+                    getAmount_.next();
+
+                    PreparedStatement itemName = conn.prepareStatement("SELECT item FROM suppliervault WHERE custom_ID = '" + cust_ID + "'");
+                    ResultSet itemName_ = itemName.executeQuery();
+                    itemName_.next();
+                    PreparedStatement deductStock = conn.prepareStatement("UPDATE productVault SET stocks = stocks - '" + getAmount_.getString("quantity") + "' WHERE item = '" + itemName_.getString("item") + "'");
+                    deductStock.executeUpdate();
+
+                    PreparedStatement getDetail = conn.prepareStatement("SELECT orderDetail FROM suppliervault WHERE custom_ID = '" + cust_ID + "'");
+                    ResultSet getDetail_ = getDetail.executeQuery();
+                    getDetail_.next();
+
+                    getCost = conn.prepareStatement("SELECT costs_balance FROM suppliervault WHERE custom_ID = '" + cust_ID + "'");
+                    ResultSet getCost_ = getCost.executeQuery();
+                    getCost_.next();
+
+                    File getFile = new File(getName_.getString("id") + ".txt");
+                    if (getFile.exists()) {
+                        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+                        LocalDateTime now = LocalDateTime.now();
+                        FileWriter writeDate = new FileWriter(getFile, true);
+                        BufferedWriter bufferedWriter = new BufferedWriter(writeDate);
+                        bufferedWriter.write("\n\nCompleted - RM " + getCost_.getDouble("costs_balance") + " [" + getDetail_.getString("orderDetail") + "] at " + String.valueOf(dtf.format(now)));
+                        bufferedWriter.close();
+                    }
+
+                    keepIn();
+                } else {
+                    System.out.println("\nOngoing Order Request");
+                    keepIn();
+                }
+            } else {
+                System.out.println("\nOnly enter the custom IDs shown above.");
+                keepIn();
+            }
+        } else {
+            keepIn();
+        }
+
+    }
+    public void keepIn() throws SQLException, IOException, InterruptedException {
+        Connection conn = super.getConnection();
+        System.out.print("\n1. Cancellation Requests\n2. Approve Order\n3. Search Customer Data\n4. Log Out\n#  Enter: ");
+        int option = scan.nextInt();
+        scan.nextLine();
+
+        if (option == 1) {
+            PreparedStatement getAllid = conn.prepareStatement("SELECT id FROM suppliervault WHERE requestStatus  = 'R-cancel'");
+            PreparedStatement getAllcustom = conn.prepareStatement("SELECT custom_ID FROM suppliervault WHERE requestStatus  = 'R-cancel'");
+            PreparedStatement getAllcost = conn.prepareStatement("SELECT costs_balance FROM suppliervault WHERE requestStatus  = 'R-cancel'");
+            ResultSet run_1 = getAllid.executeQuery();
+            ResultSet run_2 = getAllcustom.executeQuery();
+            ResultSet run_3 = getAllcost.executeQuery();
+
+            System.out.println("\n:::::::::Requests:::::::::");
+            System.out.println("Blank field indicates no cancellation requests at the moment\n");
+            int count = 0;
+
+            while (run_1.next()) {
+                run_2.next();
+                run_3.next();
+                count += 1;
+                System.out.println(String.valueOf(count) + ". [ID: " + run_1.getString("id") + "] - " + "[custom ID: " + run_2.getString("custom_ID") + "] - " + "[Cost: RM" + run_3.getDouble("costs_balance") + "]\n");
+            }
+            System.out.println("Press enter to cancel an order, otherwise '0': ");
+            String option_2 = scan.nextLine();
+
+            if (option_2 == "") {
+                System.out.print("Enter the customer's custom ID: ");
+                String cust_ID = scan.nextLine();
+
+                PreparedStatement valid = conn.prepareStatement("SELECT custom_ID FROM suppliervault WHERE custom_ID  = '" + cust_ID + "'");
+                ResultSet check = valid.executeQuery();
+
+                if (check.next()) {
+                    PreparedStatement getName = conn.prepareStatement("SELECT id FROM suppliervault WHERE custom_ID  = '" + cust_ID + "'");
+                    ResultSet getName_ = getName.executeQuery();
+                    getName_.next();
+                    PreparedStatement getRealName = conn.prepareStatement("SELECT name FROM customervault WHERE spe_ID = '" + getName_.getString("id") + "'");
+                    ResultSet getRealName_ = getRealName.executeQuery();
+                    getRealName_.next();
+                    System.out.println("\nApprove " + getRealName_.getString("name") + "" + "'s cancellation request?");
+                    System.out.print("Press enter to approve, otherwise '0': ");
+                    String approve = scan.nextLine();
+
+                    if (approve == "") {
+                        PreparedStatement getCost = conn.prepareStatement("SELECT costs_balance FROM suppliervault WHERE custom_ID = '" + cust_ID + "'");
+                        ResultSet getCost_ = getCost.executeQuery();
+                        getCost_.next();
+
+                        PreparedStatement UPDATECost = conn.prepareStatement("UPDATE customervault SET balance = balance + '" + getCost_.getDouble("costs_balance") + "' WHERE spe_ID  = '" + getName_.getString("id") + "'");
+                        PreparedStatement UPDATESupplier = conn.prepareStatement("UPDATE suppliervault SET costs_balance = 0, requestStatus = 'S-cancellation', status = 'cancelled' WHERE custom_ID = '" + cust_ID + "'");
+                        UPDATECost.executeUpdate();
+                        UPDATESupplier.executeUpdate();
+
+                        System.out.println("\nCancellation Of Order #" + cust_ID + " has been approved.");
+                        System.out.println("The system has succesfully refunded to the customer's balance.");
+                        keepIn();
+                    } else {
+                        System.out.println("\nOngoing Cancellation Request");
+                        keepIn();
+                    }
+                } else {
+                    System.out.println("\nOnly enter the custom IDs shown above.");
+                    keepIn();
+                }
+            } else {
+                keepIn();
+            }
+        } else if (option == 2) {
+            approveOrder();
+        } else if (option == 3) {
+            System.out.print("\nEnter the customer ID: ");
+            String custID = scan.nextLine();
+
+            PreparedStatement checkID = conn.prepareStatement("SELECT spe_ID FROM customerVault WHERE spe_ID  = '" + custID + "'");
+            ResultSet run = checkID.executeQuery();
+
+            if (run.next()) {
+                System.out.println("\n*Please acknowledge that we don't provide suppliers with 'sensitive' customer datas such as their passwords as part of Customer~Protection Policy...");
+
+                String[] arrayOfConduct = {
+                    "SELECT spe_ID FROM customerVault WHERE spe_ID = '" + custID + "'",
+                    "SELECT name FROM customerVault WHERE spe_ID = '" + custID + "'",
+                    "SELECT phoneNumber FROM customerVault WHERE spe_ID = '" + custID + "'",
+                    "SELECT email FROM customerVault WHERE spe_ID = '" + custID + "'"
+                };
+                String[] storeData = new String[4];
+                String[] getType = {
+                    "spe_ID",
+                    "name",
+                    "phoneNumber",
+                    "email"
+                };
+                int i = 0;
+                for (i = 0; i < 4; i++) {
+                    PreparedStatement launchQuery = conn.prepareStatement(arrayOfConduct[i]);
+                    run = launchQuery.executeQuery();
+                    run.next();
+                    storeData[i] = run.getString(getType[i]);
+                }
+                System.out.println("\n:::::::::Customer Details:::::::::");
+                String[] print = {
+                    "ID          : ",
+                    "Name        : ",
+                    "Phone Number: ",
+                    "Email       : "
+                };
+                for (i = 0; i < 4; i++) {
+                    System.out.println(print[i] + storeData[i]);
+                }
+                keepIn();
+            } else {
+                System.out.println("\nThe customer ID does not exist in our system.");
+                keepIn();
+            }
+        } else {
+            super.main(null);
+        }
+    }
+    public void login() throws SQLException, IOException, InterruptedException {
+        Connection conn = super.getConnection();
+        Scanner scan = new Scanner(System.in);
+        System.out.print("Enter Supplier ID: ");
+        String id = scan.nextLine();
+
+        PreparedStatement checkID = conn.prepareStatement("SELECT id FROM supplierIDs WHERE id = '" + id + "'");
+        ResultSet run = checkID.executeQuery();
+
+        if (run.next()) {
+            keepIn();
+        } else {
+            System.out.println("\nThe ID does not match our records");
+            System.out.println("Would you like to register as a new Supplier?");
+            System.out.print("Press 'enter' to proceed, otherwise '0': ");
+            String input = scan.nextLine();
+
+            if (input == "") {
+                super.newRegister_Supplier();
+            }
+        }
+    }
+}
+class LOGINcustomer extends LOGINsupplier {
+    private int option = 0;
+    private double amount = 0;
+    private String custID = new String();
+    private Scanner scan = new Scanner(System.in);
+
+    public void keepIn() throws SQLException, IOException, InterruptedException {
+        Connection connect = super.getConnection();
+        System.out.print("\n1. Order\n2. Bank-In\n3. Cancel Order\n4. Completed Purchases\n5. Log Out\n#  Enter: ");
+        int nextOption = scan.nextInt();
+        scan.nextLine();
+
+        ResultSet getCurrent = null;
+
+        if (nextOption == 1) {
+            PreparedStatement setTrace = connect.prepareStatement("UPDATE backgroundtrace SET traceID = '" + custID + "'");
+            setTrace.executeUpdate();
+
+            String[] arrayOfConduct = {
+                "SELECT stocks FROM productvault WHERE item = 'blanket'",
+                "SELECT stocks FROM productvault WHERE item = 'graphic card'",
+                "SELECT stocks FROM productvault WHERE item = 'drone'",
+                "SELECT stocks FROM productvault WHERE item = 'water jet'",
+                "SELECT stocks FROM productvault WHERE item = 'motorbike'"
+            };
+
+            int i = 0;
+            ResultSet execute = null;
+
+            int[] tempData = new int[5];
+            for (i = 0; i < 5; i++) {
+                PreparedStatement blanketCount = connect.prepareStatement(arrayOfConduct[i]);
+                execute = blanketCount.executeQuery();
+                execute.next();
+                tempData[i] = execute.getInt("stocks");
+            }
+
+            System.out.println("\n::::::::::::Stocks Of Available Items::::::::::::\n");
+
+            String[] arrayOfProducts = {
+                "                 Product                                         Price     Stocks",
+                "\n1. Melanie Soft Water-Treated Blanket                           *RM56*    : ",
+                "\n2. xvKING 4GB VRAM 50watt TGP Graphics Card                     *RM3425*  : ",
+                "\n3. Spell Army High-Perfomance Drone 		                *RM3677*  : ",
+                "\n4. Good~Venus 100m Kevlar Reinforced Water Jet[1 year warranty] *RM249.9* : ",
+                "\n5. Sphynx^Of Egypt 3rd Gen X-Class Roaming Motorbike            *RM76999* : "
+            };
+
+            System.out.print(arrayOfProducts[0]);
+            for (i = 1; i < 6; i++) {
+                System.out.print(arrayOfProducts[i] + String.valueOf(tempData[i - 1]));
+            }
+
+            System.out.print("\n#  Enter Option [0 to exit]: ");
+            option = scan.nextInt();
+            scan.nextLine();
+
+            String catchOption = "";
+            PreparedStatement getStock = null;
+            ResultSet getStock_ = null;
+            String gArray = new String();
+            if (option == 1) {
+                catchOption = "Melanie Soft Water-Treated Blanket";
+                gArray = arrayOfConduct[0];
+            } else if (option == 2) {
+                catchOption = "xvKING 4GB VRAM 50watt TGP Graphics Card";
+                gArray = arrayOfConduct[1];
+            } else if (option == 3) {
+                catchOption = "Spell Army High-Perfomance Drone";
+                gArray = arrayOfConduct[2];
+            } else if (option == 4) {
+                catchOption = "Good~Venus 100m Kevlar Reinforced Water Jet[1 year warranty]";
+                gArray = arrayOfConduct[3];
+            } else if (option == 5) {
+                catchOption = "Sphynx^Of Egypt 3rd Gen X-Class Roaming Motorbike";
+                gArray = arrayOfConduct[4];
+            }
+            getStock = connect.prepareStatement(gArray);
+            getStock_ = getStock.executeQuery();
+            getStock_.next();
+
+            double price = 0;
+            PreparedStatement getPrice = null;
+            PreparedStatement getItemName = null;
+            if (option > 5 || option < 1) {
+                keepIn();
+            } else if (option == 1) {
+                getPrice = connect.prepareStatement("SELECT price FROM productVault WHERE item = 'blanket'");
+                getItemName = connect.prepareStatement("SELECT item FROM productVault WHERE item = 'blanket'");
+            } else if (option == 2) {
+                getPrice = connect.prepareStatement("SELECT price FROM productVault WHERE item = 'graphic card'");
+                getItemName = connect.prepareStatement("SELECT item FROM productVault WHERE item = 'graphic card'");
+            } else if (option == 3) {
+                getPrice = connect.prepareStatement("SELECT price FROM productVault WHERE item = 'drone'");
+                getItemName = connect.prepareStatement("SELECT item FROM productVault WHERE item = 'drone'");
+            } else if (option == 4) {
+                getPrice = connect.prepareStatement("SELECT price FROM productVault WHERE item = 'water jet'");
+                getItemName = connect.prepareStatement("SELECT item FROM productVault WHERE item = 'water jet'");
+            } else if (option == 5) {
+                getPrice = connect.prepareStatement("SELECT price FROM productVault WHERE item = 'motorbike'");
+                getItemName = connect.prepareStatement("SELECT item FROM productVault WHERE item = 'motorbike'");
+            }
+
+            ResultSet getValue = getPrice.executeQuery();
+            getValue.next();
+            price = getValue.getDouble("price");
+
+            ResultSet getName = getItemName.executeQuery();
+            getName.next();
+            String itemName = getName.getString("item");
+
+            System.out.print("\nEnter the amount: ");
+            amount = scan.nextDouble();
+            scan.nextLine();
+            double copyAmt = amount;
+            
+            if (getStock_.getInt("stocks") == 0) {
+            	System.out.println("\nProduct out of Stock!");
+            	System.out.println("Our staff will restock the product as soon as possible.");
+            	keepIn();
+            }
+            if (amount > getStock_.getInt("stocks")) {
+            	System.out.println("\nDon't enter amount higher than left stocks.");
+            	keepIn();
+            }
+
+            catchOption += " x " + String.valueOf(Math.round(amount));
+            amount *= price;
+
+            PreparedStatement x = connect.prepareStatement("SELECT traceID FROM backgroundtrace WHERE id = 1");
+            getCurrent = x.executeQuery();
+            getCurrent.next();
+
+            PreparedStatement getBank = connect.prepareStatement("SELECT password FROM customervault WHERE spe_ID = '" + getCurrent.getString("traceID") + "'");
+            ResultSet validation = getBank.executeQuery();
+            validation.next();
+
+            String bankPassword = new String();
+            System.out.print("Please enter your bank password to proceed: ");
+            bankPassword = scan.nextLine();
+
+            if (bankPassword.equalsIgnoreCase(validation.getString("password"))) {
+
+                PreparedStatement getFunds = connect.prepareStatement("SELECT balance FROM customerVault WHERE spe_ID = '" + getCurrent.getString("traceID") + "'");
+                ResultSet validation2 = getFunds.executeQuery();
+                validation2.next();
+                double balance = validation2.getDouble("balance");
+
+                String command = "";
+                final String getRand = super.randGenerator();
+                if (balance < 30) {
+                    System.out.println("\nInsufficient funds!\nYou have been charged RM35.\nPlease keep a minimum balance of RM 30 to avoid charges.\n");
+                    PreparedStatement charge = connect.prepareStatement("UPDATE customerVault SET balance = balance - 35 WHERE spe_ID = '" + getCurrent.getString("traceID") + "'");
+                    charge.executeUpdate();
+                    keepIn();
+                } else if (balance < amount) {
+                    System.out.println("\nInsufficient balance detected...\nPlease topup in the future to proceed.");
+                    keepIn();
+                } else {
+                    PreparedStatement checkDouble = connect.prepareStatement("SELECT id FROM supplierVault WHERE id = '" + getCurrent.getString("traceID") + "'");
+                    checkDouble.executeQuery();
+                    command = "INSERT into suppliervault (id, custom_ID, orderDetail, quantity, item, costs_balance, status, requestStatus) values ('" + getCurrent.getString("traceID") + "', '" + getRand + "', '" + catchOption + "','" + copyAmt + "', '" + itemName + "',  '" + amount + "', 'active', 'none')";
+
+                    PreparedStatement FROMCust = connect.prepareStatement("UPDATE customerVault SET balance = balance - '" + amount + "' WHERE spe_ID = '" + getCurrent.getString("traceID") + "'");
+                    FROMCust.executeUpdate();
+
+                    super.invokeAddFunds_to_supplier(command);
+
+                    System.out.println("\nProduct(s) has been ordered.");
+                    System.out.println("We have notified the supplier about your order.");
+                    System.out.println("Feel free to contact the supplier for any inqueries or Refunds-related subjects.\n");
+
+                    PreparedStatement setQuantity = connect.prepareStatement("UPDATE suppliervault SET quantity  = '" + copyAmt + "' WHERE custom_ID = '" + getRand + "'");
+                    setQuantity.executeUpdate();
+
+                    keepIn();
+                }
+            } else {
+                System.out.println("\n\nWrong Password entered, redirecting you to homepage...\n");
+            }
+        } else if (nextOption == 2) {
+            String acctNo = new String();
+            PreparedStatement getID = connect.prepareStatement("SELECT spe_ID FROM customerVault WHERE spe_ID = '" + custID + "'");
+            ResultSet check = getID.executeQuery();
+            PreparedStatement getAcctNo = connect.prepareStatement("SELECT accountNumber FROM customerVault WHERE spe_ID = '" + custID + "'");
+            check = getAcctNo.executeQuery();
+            check.next();
+
+            System.out.print("\nEnter your account number: ");
+            acctNo = scan.nextLine();
+
+            if (!acctNo.equalsIgnoreCase(check.getString("accountNumber"))) {
+                System.out.println("\nYou've entered the wrong account number.");
+                System.out.println("Taking you back to main page for security purposes....");
+            } else {
+                double add = 0;
+                System.out.print("\nEnter the amount to top-up: ");
+                add = scan.nextDouble();
+
+                PreparedStatement addbalance = connect.prepareStatement("UPDATE customerVault SET balance = balance + '" + add + "' WHERE accountNumber = '" + acctNo + "'");
+                addbalance.executeUpdate();
+                System.out.println("\nTop-Up Successful!\n");
+                keepIn();
+            }
+        } else if (nextOption == 3) {
+
+            PreparedStatement x = connect.prepareStatement("SELECT traceID FROM backgroundtrace WHERE id = 1");
+            getCurrent = x.executeQuery();
+            getCurrent.next();
+
+            PreparedStatement getAllOrd = connect.prepareStatement("SELECT orderDetail FROM suppliervault WHERE id = '" + getCurrent.getString("traceID") + "' and status = 'active'");
+            ResultSet get = getAllOrd.executeQuery();
+            PreparedStatement getID = connect.prepareStatement("SELECT custom_ID FROM suppliervault WHERE id = '" + getCurrent.getString("traceID") + "' and status = 'active' ");
+            ResultSet getIDs = getID.executeQuery();
+
+            System.out.println("\n\n:::::::::All Orders:::::::::");
+            int count = 0;
+
+            while (get.next()) {
+                getIDs.next();
+                count += 1;
+                System.out.print(String.valueOf(count) + ". " + get.getString("orderDetail") + "  #ID: " + getIDs.getString("custom_ID") + "\n");
+            }
+            System.out.print("\nCancel Order? [enter | 0]: ");
+            String cancel = scan.nextLine();
+
+            if (cancel == "") {
+                System.out.print("Please enter the order's ID to proceed: ");
+                String getOrder = scan.nextLine();
+
+                PreparedStatement valid = connect.prepareStatement("SELECT custom_ID  FROM suppliervault WHERE custom_ID = '" + getOrder + "'");
+                ResultSet check = valid.executeQuery();
+                if (check.next()) {
+                    System.out.print("Are you sure to cancel this order? [enter | 0] : ");
+                    String next = scan.nextLine();
+                    if (next == "") {
+                        PreparedStatement changeRequest = connect.prepareStatement("UPDATE supplierVault SET requestStatus  = 'R-cancel' WHERE custom_ID = '" + getOrder + "'");
+                        changeRequest.executeUpdate();
+                        System.out.println("\nYou have requested to cancel the order.");
+                        System.out.println("We have notified the supplier about your oncurring request.");
+                        System.out.println("Waiting supplier to approve your cancellation request...");
+                        keepIn();
+                    } else {
+                        System.out.println("\nOngoing Order...");
+                        keepIn();
+                    }
+                } else {
+                    System.out.println("\nOnly enter the IDs shown above.");
+                    keepIn();
+                }
+            } else {
+                keepIn();
+            }
+        } else if (nextOption == 4) {
+            File getFile = new File(custID + ".txt");
+            Scanner read = new Scanner(getFile);
+            System.out.println("\n:::::::::Approved Orders:::::::::");
+            while (read.hasNextLine()) {
+                String print = read.nextLine();
+                System.out.println(print);
+            }
+            keepIn();
+        }
+    }
+    public void setID(String passID) {
+        this.custID = passID;
+    }
+    
+    public void login() throws SQLException, IOException, InterruptedException {
+        Connection connect = super.getConnection();
+        Scanner scan = new Scanner(System.in);
+        System.out.print("Enter Customer ID: ");
+        custID = new String();
+        custID = scan.nextLine();
+        setID(custID);
+
+        PreparedStatement retrieveID = connect.prepareStatement("SELECT spe_ID FROM customervault WHERE spe_ID = '" + custID + "'");
+        ResultSet isValid = retrieveID.executeQuery();
+        if (isValid.next()) {
+            System.out.print("Enter password: ");
+            String password = new String();
+            password = scan.nextLine();
+            retrieveID = connect.prepareStatement("SELECT password FROM customervault WHERE spe_ID = '" + custID + "'");
+            isValid = retrieveID.executeQuery();
+            isValid.next();
+
+            if (password.equalsIgnoreCase(isValid.getString("password"))) {
+                keepIn();
+            } else {
+                System.out.println("\nIncorrect Password");
+            }
+        } else {
+            System.out.println("\nThe ID does not exist in our system.");
+            System.out.println("\nWould you like to register now?");
+            System.out.println("Press enter to proceed, otherwise '0': ");
+            String register = scan.nextLine();
+            if (register == "") {
+                super.newRegister();
+            }
+        }
+    }
+}
+class Solaris {
+
+    public Solaris() {}
+    public static void main(String[] args) throws SQLException, IOException, InterruptedException {
+        createTable();
+        LOGINcustomer initial = new LOGINcustomer();
+        LOGINsupplier initial_2 = new LOGINsupplier();
+        NEWcustomer initial_3 = new NEWcustomer();
+
+        int choose = 0;
+        Scanner read = new Scanner(System.in);
+
+        while (true) {
+            System.out.print("\n1. Register\n2. Customer Login\n3. Supplier Page\n#  Enter: ");
+            choose = read.nextInt();
+            System.out.print("\n");
+
+            if (choose == 1) {
+                initial_3.newRegister();
+            } else if (choose == 2) {
+                initial.login();
+            } else if (choose == 3) {
+                initial_2.login();
+            }
+        }
+    }
+    public static Connection getConnection() throws SQLException {
+        Connection conn = null;
+        try {
+            String driver = "com.mysql.jdbc.Driver";
+            String url = "jdbc:mysql://localhost:3306/solaris?characterEncoding=utf8";
+            String username = "root";
+            String password = "nvidia5229@K";
+            Class.forName(driver);
+
+            conn = DriverManager.getConnection(url, username, password);
+        } catch (Exception e) {
+            System.out.println("failed to connect to database...");
+        }
+        return conn;
+    }
+    public static void createTable() throws SQLException {
+        try {
+            Connection conn = getConnection();
+            String[] arrayOf_TableBuilds = {
+                "CREATE TABLE IF NOT EXISTS customerVault( spe_ID varchar(255), name varchar(255), phoneNumber varchar(255), email varchar(255), accountNumber varchar(255), password varchar(255), balance DOUBLE(255, 3))",
+                "CREATE TABLE IF NOT EXISTS productVault(item varchar(255), stocks INT(255), price DOUBLE(255, 3))",
+                "CREATE TABLE IF NOT EXISTS supplierVault(id varchar(255), custom_ID varchar(255), orderDetail varchar(255), costs_balance DOUBLE(255, 3), status varchar(255), requestStatus varchar(255))",
+                "CREATE TABLE IF NOT EXISTS backgroundTrace(id int not null auto_increment, traceID varchar(255), primary key(id))",
+                "CREATE TABLE IF NOT EXISTS traceCustOrder(custID varchar(255), custom_ID varchar(255), details varchar(255), costs DOUBLE(233, 3))",
+                "CREATE TABLE IF NOT EXISTS supplierIDs(id varchar(255))"
+            };
+
+            for (int i = 0; i < 6; i++) {
+                PreparedStatement createTable = conn.prepareStatement(arrayOf_TableBuilds[i]);
+                createTable.executeUpdate();
+            }
+
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}
